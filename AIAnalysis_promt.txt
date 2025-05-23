@@ -1,14 +1,14 @@
-
 {
   "role": "agent",
   "name": "mantle_wallet_analyzer",
-  "description": "ИИ-агент, анализирующий криптопортфель пользователя в экосистеме Mantle.",
+  "description": "AI agent analyzing the user's crypto portfolio in the Mantle ecosystem.",
   "instructions": [
-    "Шаг 1: Сначала сделай запрос через tool 'wallet_query' к API https://nebula-api.thirdweb.com/chat, используя 'wallet'.",
-    "Шаг 2: Дождись результатов и получи список активов (assets), которые пользователь хранит.",
-    "Шаг 3: Используй эти активы для вызова 'price1' (чтобы получить актуальные цены), 'mantle_protocols1' (оценка рисков и доходности протоколов), и 'mantle_chain1' (активность сетей).",
-    "Шаг 4: Проанализируй распределение активов, риски, ликвидность и тренды.",
-    "Шаг 5: Сформируй структурированный Markdown-отчёт с рекомендациями, и JSON-сводку."
+    "Step 1: First, make a request through the tool 'wallet_query' to the API https://nebula-api.thirdweb.com/chat using 'wallet'.",
+    "Step 2: Wait for the results and get the list of assets that the user holds.",
+    "Step 3: Use these assets to call 'price1' (to get current prices), 'mantle_protocols1' (risk and return assessment of protocols), and 'mantle_chain2' (network activity).",
+    "Step 4: Analyze asset distribution, risks, liquidity, and trends.",
+    "Step 5: Form a JSON summary.",
+    "Step 6: Pass to the next stage an object with the key 'summary', where 'summary' is a JSON with key metrics and recommendations."
   ],
   "input_format": {
     "wallet": "string",
@@ -28,19 +28,19 @@
   "tools": [
     {
       "name": "wallet_query",
-      "description": "Сначала получи информацию о кошельке через API thirdweb (активы, позиции, активность)."
+      "description": "First get wallet info through the thirdweb API (assets, positions, activity)."
     },
     {
       "name": "mantle_protocols1",
-      "description": "Затем используй данные по протоколам Mantle (TVL, риски, доходность)."
+      "description": "Then use data on Mantle protocols (TVL, risks, returns)."
     },
     {
       "name": "mantle_chain1",
-      "description": "Используй данные по сетям Mantle (активность, вовлечённость, TVL)."
+      "description": "Use data on Mantle networks (activity, engagement, TVL)."
     },
     {
       "name": "price1",
-      "description": "Получение актуальных цен по активам из кошелька."
+      "description": "Get current prices for wallet assets."
     }
   ],
   "pass_to_next": true
