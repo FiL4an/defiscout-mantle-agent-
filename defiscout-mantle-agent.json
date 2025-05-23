@@ -1,0 +1,612 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1560,
+        120
+      ],
+      "id": "7520d82f-b016-4971-83fe-13bacf7efed8",
+      "name": "Telegram Trigger2",
+      "webhookId": "d164910a-f343-4f69-a9e1-783e36427355",
+      "credentials": {
+        "telegramApi": {
+          "id": "FW6pts6WnXbe5iHH",
+          "name": "teleFL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "text": "=The address was not found. Make sure that you have sent the correct Ethereum-address starting with 0x and try again",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -900,
+        220
+      ],
+      "id": "966201d3-269e-4f7a-b82b-7f7e6b745716",
+      "name": "ERROR MSG2",
+      "webhookId": "b71565fd-73f2-46c7-8a25-0869a532dab0",
+      "credentials": {
+        "telegramApi": {
+          "id": "FW6pts6WnXbe5iHH",
+          "name": "teleFL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "text": "Please wait a few minutes. I will check all the information and give you recommendations!",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -900,
+        20
+      ],
+      "id": "8ddce85e-056c-47a3-88fc-8691fd9dfa8a",
+      "name": "PLEASE WAIT MSG2",
+      "webhookId": "4c5fd6ee-62ec-4ff7-badf-fe973b0899f0",
+      "credentials": {
+        "telegramApi": {
+          "id": "FW6pts6WnXbe5iHH",
+          "name": "teleFL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
+        "text": "={{ $('Экранизация Markdown2').item.json.messageEscaped }}",
+        "replyMarkup": "=",
+        "forceReply": {},
+        "replyKeyboardOptions": {},
+        "replyKeyboardRemove": {},
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "MarkdownV2"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        820,
+        20
+      ],
+      "id": "5b1cce2a-2247-4e0f-8034-16cdc8bd9aeb",
+      "name": "RESPONSE TO USER2",
+      "webhookId": "b71565fd-73f2-46c7-8a25-0869a532dab0",
+      "credentials": {
+        "telegramApi": {
+          "id": "FW6pts6WnXbe5iHH",
+          "name": "teleFL"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const telegramText = $('Telegram Trigger2').first()?.json?.message?.text;\nconst inputText = $input.first()?.json?.text;\n\nconst text = (telegramText || inputText || '').toLowerCase();\nconst match = text.match(/(?:^|\\s)(0x[a-f0-9]{40})(?=\\s|$)/m);\n\nreturn [{\n  json: {\n    wallet: match ? match[1] : null,\n    message: match ? '✅ Адрес найден.' : '❌ Не удалось найти адрес в сообщении.',\n    fullText: text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1340,
+        120
+      ],
+      "id": "85a2b8b8-f41b-4ec7-95be-835dadc1ff4e",
+      "name": "Извлечь кошелёк из сообщения2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8011194727:AAHTLQM5ba3p68Gc0qX7ZeqvVmLHlwKCGPk/sendMessage",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"chat_id\": \"{{$json.chat_id}}\",\n  \"text\": \"{{$json.messageEscaped}}\",\n  \"parse_mode\": \"MarkdownV2\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        600,
+        20
+      ],
+      "id": "1dc5c0b3-fbb6-4181-a2a3-bfa9121bdbaf",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a8bdb1e6-7af2-41e6-9e5d-216087e270ba",
+              "leftValue": "={{ $json.wallet }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        120
+      ],
+      "id": "59e6f896-3f27-4aee-ad68-fdf53cb17e1a",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "jsCode": "function escapeMarkdownV2(text) {\n  return text\n    .replace(/([_*\\[\\]()~`>#+=|{}.!\\-])/g, '\\\\$1') // спецсимволы MarkdownV2\n    .replace(/\\\\/g, '\\\\\\\\')                       // экранируем обратный слеш\n    .replace(/\"/g, '\\\\\"')                         // экранируем двойные кавычки\n    .replace(/\\n/g, '\\\\n');                       // переносы строк\n}\n\n// Получаем chat_id из Telegram Trigger\nconst chatId = $('Telegram Trigger2').first().json.message.chat.id;\n\n// Получаем текст из AI output\nconst rawText = $input.first().json.output || 'Empty message';\n\n// Экранируем текст\nconst escaped = escapeMarkdownV2(rawText);\n\nreturn [\n  {\n    json: {\n      chat_id: chatId,\n      messageEscaped: escaped   // <--- Используем экранированный текст!\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        20
+      ],
+      "id": "a83268f3-2156-4e0b-b3a1-a8280e7564b6",
+      "name": "Экранизация Markdown2"
+    },
+    {
+      "parameters": {
+        "model": "openai/o4-mini",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        40,
+        240
+      ],
+      "id": "7184f9a9-c955-4890-bec2-c1ad9954d5bc",
+      "name": "OpenRouter Chat Model1",
+      "credentials": {
+        "openRouterApi": {
+          "id": "AAmyi1FI3eCgvLVG",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Извлечь кошелёк из сообщения2').item.json.fullText }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "System Prompt\n\nRole: AI-аналитик Mantle Network  \nData Sources:  \n1. NebulaAPI – баланс, транзакции, события  \n2. DefiLlama – протоколы, TVL, пулы  \n3. LlamaPriceAPI – актуальные цены токенов (по платформам и адресам)\n\nИнструкции:  \n1. Nebula:  \n   - Запрос getWalletData → топ-5 активов (баланс ≥$50)  \n   - Извлечь: символ, количество, стоимость (USD), % портфеля, 3 последние транзакции\n- Для каждого токена → получить цену (LlamaPriceAPI(tool price), )  \n   - Рассчитать: стоимость токена в USD, % от портфеля  \n   - Указать 3 последние транзакции по активу    \n\n2. DefiLlama:  \n   - Запрос /protocols → фильтр ecosystem=Mantle  \n   - Группировать протоколы: \"Лендинг\" / \"Ликвидность\"  \n   - Извлечь: TVL, APY/APR, параметры пулов\n\n3. LlamaPriceAPI – актуальные цены токенов (по платформам и адресам)  \n\n\n4. Рекомендации:  \n   - Для каждого актива → 2 лендинга + 2 пула  \n   - Диапазон цен: ±15% от текущей (авто-расчёт)  \n   - Указать риски (IL, LTV, ликвидность)  \n\nFORMAT:  \n- Markdown с секциями: \"1. Анализ активов\", \"2. Обзор протоколов\", \"3. Рекомендации\"  \n- Эмодзи: 🏦/💧 + таблицы  \n- Финал: ⚠️ Дисклеймер\n- в формате Markdown, но избегайте сложных специальных символов Markdown V2. \n-Переведи  текст на Английский язык(Answer in English) \n\n\nПример вывода:\n\nmarkdown  \n# 1. Анализ активов 🧮  \n\n| Актив | Баланс | Стоимость | % Портфеля |  \n|-------|--------|-----------|------------|  \n| MNT   | 1,200  | $1,560    | 38%        |  \n| USDC  | 1,500  | $1,500    | 37%        |  \n\nПоследние события:  \n- MNT: Депозит 2 ч назад (500 MNT → кошелёк)  \n- USDC: Вывод $800 вчера  \n\n# 2. Обзор DeFi-протоколов 📊  \n\n🏦 Лендинг:  \n| Протокол  | TVL      | APR   | Условия          |  \n|-----------|----------|-------|------------------|  \n| Lendle    | $28M     | 12.4% | LTV 65%, Flex    |  \n| Minterest | $15M     | 9.8%  | Фикс. ставка 30д |  \n\n💧 Ликвидность:  \n| Пул        | TVL      | Объём/24ч | Комиссия |  \n|------------|----------|-----------|----------|  \n| MNT/USDC   | $12M     | $1.2M     | 0.3%     |  \n| wETH/USDT  | $8.5M    | $890k     | 0.05%    |  \n\n# 3. Рекомендации 🎯  \n\nMNT:  \n🏦 Лендинг:  \n1. Lendle (APR 12.4%) – 50% баланса  \n2. Minterest (APR 9.8%) – 30% баланса  \n\n💧 Ликвидность:  \n1. MNT/USDC: Диапазон $0.95–$1.25 (прогноз APY 18-25%)  \n2. MNT/wETH: Диапазон $1.02–$1.38 (прогноз APY 14-20%)  \n\n⚠️ Это не инвестиционный совет. Решение принимает пользователь.*  \nГотово! 🚀"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b9ca0010-4afc-4c49-bf4e-a5d7635239a2",
+      "name": "Распределение Активов(Новый промт)2"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Общение с Nebula",
+        "method": "POST",
+        "url": "https://nebula-api.thirdweb.com/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-secret-key",
+              "value": "QFunJuPhqXyoomhWnORsRk7vWZmSgpqLKfyl1d4JQugnx3ksmF_TwI_c9akJS0x5QUTIYYn-76MYu5oIFb3EEw"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `тут напиши свое сообщение для Nebula`, 'string') }}"
+            },
+            {
+              "name": "stream",
+              "value": "false"
+            },
+            {
+              "name": "context",
+              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Извлечь кошелёк из сообщения2').item.json.wallet } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        240
+      ],
+      "id": "7d2ccba9-15ce-48a7-b684-44f93dd3d104",
+      "name": "nebula_api_too2"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4o-mini"
+        },
+        "options": {
+          "responseFormat": "text"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -680,
+        240
+      ],
+      "id": "3784b2a6-9663-4f0e-afee-26a368a54d28",
+      "name": "OpenAI Chat Model2",
+      "credentials": {
+        "openAiApi": {
+          "id": "L6Kr2XHDsgey2BlI",
+          "name": "testDavy"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Извлечь кошелёк из сообщения2').item.json.wallet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "{\n  \"role\": \"agent\",\n  \"name\": \"mantle_wallet_analyzer\",\n  \"description\": \"ИИ-агент, анализирующий криптопортфель пользователя в экосистеме Mantle.\",\n  \"instructions\": [\n    \"Шаг 1: Сначала сделай запрос через tool 'wallet_query' к API https://nebula-api.thirdweb.com/chat, используя 'wallet'.\",\n    \"Шаг 2: Дождись результатов и получи список активов (assets), которые пользователь хранит.\",\n    \"Шаг 3: Используй эти активы для вызова 'price1' (чтобы получить актуальные цены), 'mantle_protocols1' (оценка рисков и доходности протоколов), и 'mantle_chain1' (активность сетей).\",\n    \"Шаг 4: Проанализируй распределение активов, риски, ликвидность и тренды.\",\n    \"Шаг 5: Сформируй структурированный Markdown-отчёт с рекомендациями, и JSON-сводку.\"\n  ],\n  \"input_format\": {\n    \"wallet\": \"string\",\n    \"wallet_info\": \"object\",\n    \"assets\": \"array\",\n    \"chains_result\": \"object\",\n    \"protocols_result\": \"object\"\n  },\n  \"output_format\": {\n    \"report\": \"string\",\n    \"summary\": {\n      \"highRiskProtocols\": \"array\",\n      \"suggestedRebalance\": \"array\",\n      \"underutilizedChains\": \"array\"\n    }\n  },\n  \"tools\": [\n    {\n      \"name\": \"wallet_query\",\n      \"description\": \"Сначала получи информацию о кошельке через API thirdweb (активы, позиции, активность).\"\n    },\n    {\n      \"name\": \"mantle_protocols1\",\n      \"description\": \"Затем используй данные по протоколам Mantle (TVL, риски, доходность).\"\n    },\n    {\n      \"name\": \"mantle_chain1\",\n      \"description\": \"Используй данные по сетям Mantle (активность, вовлечённость, TVL).\"\n    },\n    {\n      \"name\": \"price1\",\n      \"description\": \"Получение актуальных цен по активам из кошелька.\"\n    }\n  ],\n  \"pass_to_next\": true\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -520,
+        20
+      ],
+      "id": "3fd04951-9e7e-421e-ba45-8a97abc6d62e",
+      "name": "АНАЛИЗ1"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "JaHIadOs0yHWoYCN",
+          "mode": "list",
+          "cachedResultName": "DeFillama_Mantle_Protocols"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -560,
+        240
+      ],
+      "id": "7c3e8bcb-b83c-458d-bc1b-16f5e8b401d9",
+      "name": "mantle_protocols2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "0tulZ8gLtJVifN2N",
+          "mode": "list",
+          "cachedResultName": "Defi_Mantle_chains(сеть)"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -440,
+        240
+      ],
+      "id": "55dade0b-446b-4e29-92b1-72d9ee78b175",
+      "name": "mantle_chain2"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "F4R3P0SbWKeE3dD4",
+          "mode": "list",
+          "cachedResultName": "по всем протоколам для прайсо"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -320,
+        260
+      ],
+      "id": "684f1f7b-0cda-4973-b34e-f575596a216a",
+      "name": "price2"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Общение с Nebula",
+        "method": "POST",
+        "url": "https://nebula-api.thirdweb.com/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-secret-key",
+              "value": "QFunJuPhqXyoomhWnORsRk7vWZmSgpqLKfyl1d4JQugnx3ksmF_TwI_c9akJS0x5QUTIYYn-76MYu5oIFb3EEw"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', `тут напиши свое сообщение для Nebula`, 'string') }}"
+            },
+            {
+              "name": "stream",
+              "value": "false"
+            },
+            {
+              "name": "context",
+              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Извлечь кошелёк из сообщения2').item.json.wallet } }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        240
+      ],
+      "id": "c7f050d9-8f51-4f21-836a-81113b222f43",
+      "name": "nebula_api_too3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger2": {
+      "main": [
+        [
+          {
+            "node": "Извлечь кошелёк из сообщения2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PLEASE WAIT MSG2": {
+      "main": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Извлечь кошелёк из сообщения2": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "RESPONSE TO USER2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "PLEASE WAIT MSG2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ERROR MSG2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Экранизация Markdown2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Распределение Активов(Новый промт)2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Распределение Активов(Новый промт)2": {
+      "main": [
+        [
+          {
+            "node": "Экранизация Markdown2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "nebula_api_too2": {
+      "ai_tool": [
+        [
+          {
+            "node": "Распределение Активов(Новый промт)2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "АНАЛИЗ1": {
+      "main": [
+        [
+          {
+            "node": "Распределение Активов(Новый промт)2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mantle_protocols2": {
+      "ai_tool": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "mantle_chain2": {
+      "ai_tool": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "price2": {
+      "ai_tool": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "nebula_api_too3": {
+      "ai_tool": [
+        [
+          {
+            "node": "АНАЛИЗ1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aeeb0062-52e5-4b79-acf8-6616fd671aef",
+  "meta": {
+    "instanceId": "ee6eea47c082d020b464b486c299fcc74833fad966a25b893934030abf5a82cb"
+  },
+  "id": "QBOrRirNcDzxrKgH",
+  "tags": []
+}

@@ -1,0 +1,47 @@
+
+{
+  "role": "agent",
+  "name": "mantle_wallet_analyzer",
+  "description": "ИИ-агент, анализирующий криптопортфель пользователя в экосистеме Mantle.",
+  "instructions": [
+    "Шаг 1: Сначала сделай запрос через tool 'wallet_query' к API https://nebula-api.thirdweb.com/chat, используя 'wallet'.",
+    "Шаг 2: Дождись результатов и получи список активов (assets), которые пользователь хранит.",
+    "Шаг 3: Используй эти активы для вызова 'price1' (чтобы получить актуальные цены), 'mantle_protocols1' (оценка рисков и доходности протоколов), и 'mantle_chain1' (активность сетей).",
+    "Шаг 4: Проанализируй распределение активов, риски, ликвидность и тренды.",
+    "Шаг 5: Сформируй структурированный Markdown-отчёт с рекомендациями, и JSON-сводку."
+  ],
+  "input_format": {
+    "wallet": "string",
+    "wallet_info": "object",
+    "assets": "array",
+    "chains_result": "object",
+    "protocols_result": "object"
+  },
+  "output_format": {
+    "report": "string",
+    "summary": {
+      "highRiskProtocols": "array",
+      "suggestedRebalance": "array",
+      "underutilizedChains": "array"
+    }
+  },
+  "tools": [
+    {
+      "name": "wallet_query",
+      "description": "Сначала получи информацию о кошельке через API thirdweb (активы, позиции, активность)."
+    },
+    {
+      "name": "mantle_protocols1",
+      "description": "Затем используй данные по протоколам Mantle (TVL, риски, доходность)."
+    },
+    {
+      "name": "mantle_chain1",
+      "description": "Используй данные по сетям Mantle (активность, вовлечённость, TVL)."
+    },
+    {
+      "name": "price1",
+      "description": "Получение актуальных цен по активам из кошелька."
+    }
+  ],
+  "pass_to_next": true
+}
