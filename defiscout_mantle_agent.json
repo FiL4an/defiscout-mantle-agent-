@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "defiscout-mantle-agent",
   "nodes": [
     {
       "parameters": {
@@ -75,7 +75,7 @@
     {
       "parameters": {
         "chatId": "={{ $('Telegram Trigger2').item.json.message.chat.id }}",
-        "text": "={{ $('Экранизация Markdown2').item.json.messageEscaped }}",
+        "text": "={{ $('adaptation Markdown2').item.json.messageEscaped }}",
         "replyMarkup": "=",
         "forceReply": {},
         "replyKeyboardOptions": {},
@@ -100,19 +100,6 @@
           "name": "teleFL"
         }
       }
-    },
-    {
-      "parameters": {
-        "jsCode": "const telegramText = $('Telegram Trigger2').first()?.json?.message?.text;\nconst inputText = $input.first()?.json?.text;\n\nconst text = (telegramText || inputText || '').toLowerCase();\nconst match = text.match(/(?:^|\\s)(0x[a-f0-9]{40})(?=\\s|$)/m);\n\nreturn [{\n  json: {\n    wallet: match ? match[1] : null,\n    message: match ? '✅ Адрес найден.' : '❌ Не удалось найти адрес в сообщении.',\n    fullText: text\n  }\n}];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        -1340,
-        120
-      ],
-      "id": "85a2b8b8-f41b-4ec7-95be-835dadc1ff4e",
-      "name": "Извлечь кошелёк из сообщения2"
     },
     {
       "parameters": {
@@ -168,19 +155,6 @@
     },
     {
       "parameters": {
-        "jsCode": "function escapeMarkdownV2(text) {\n  return text\n    .replace(/([_*\\[\\]()~`>#+=|{}.!\\-])/g, '\\\\$1') // спецсимволы MarkdownV2\n    .replace(/\\\\/g, '\\\\\\\\')                       // экранируем обратный слеш\n    .replace(/\"/g, '\\\\\"')                         // экранируем двойные кавычки\n    .replace(/\\n/g, '\\\\n');                       // переносы строк\n}\n\n// Получаем chat_id из Telegram Trigger\nconst chatId = $('Telegram Trigger2').first().json.message.chat.id;\n\n// Получаем текст из AI output\nconst rawText = $input.first().json.output || 'Empty message';\n\n// Экранируем текст\nconst escaped = escapeMarkdownV2(rawText);\n\nreturn [\n  {\n    json: {\n      chat_id: chatId,\n      messageEscaped: escaped   // <--- Используем экранированный текст!\n    }\n  }\n];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        380,
-        20
-      ],
-      "id": "a83268f3-2156-4e0b-b3a1-a8280e7564b6",
-      "name": "Экранизация Markdown2"
-    },
-    {
-      "parameters": {
         "model": "openai/o4-mini",
         "options": {}
       },
@@ -198,24 +172,6 @@
           "name": "OpenRouter account"
         }
       }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Извлечь кошелёк из сообщения2').item.json.fullText }}",
-        "hasOutputParser": true,
-        "options": {
-          "systemMessage": "System Prompt\n\nRole: AI-аналитик Mantle Network  \nData Sources:  \n1. NebulaAPI – баланс, транзакции, события  \n2. DefiLlama – протоколы, TVL, пулы  \n3. LlamaPriceAPI – актуальные цены токенов (по платформам и адресам)\n\nИнструкции:  \n1. Nebula:  \n   - Запрос getWalletData → топ-5 активов (баланс ≥$50)  \n   - Извлечь: символ, количество, стоимость (USD), % портфеля, 3 последние транзакции\n- Для каждого токена → получить цену (LlamaPriceAPI(tool price), )  \n   - Рассчитать: стоимость токена в USD, % от портфеля  \n   - Указать 3 последние транзакции по активу    \n\n2. DefiLlama:  \n   - Запрос /protocols → фильтр ecosystem=Mantle  \n   - Группировать протоколы: \"Лендинг\" / \"Ликвидность\"  \n   - Извлечь: TVL, APY/APR, параметры пулов\n\n3. LlamaPriceAPI – актуальные цены токенов (по платформам и адресам)  \n\n\n4. Рекомендации:  \n   - Для каждого актива → 2 лендинга + 2 пула  \n   - Диапазон цен: ±15% от текущей (авто-расчёт)  \n   - Указать риски (IL, LTV, ликвидность)  \n\nFORMAT:  \n- Markdown с секциями: \"1. Анализ активов\", \"2. Обзор протоколов\", \"3. Рекомендации\"  \n- Эмодзи: 🏦/💧 + таблицы  \n- Финал: ⚠️ Дисклеймер\n- в формате Markdown, но избегайте сложных специальных символов Markdown V2. \n-Переведи  текст на Английский язык(Answer in English) \n\n\nПример вывода:\n\nmarkdown  \n# 1. Анализ активов 🧮  \n\n| Актив | Баланс | Стоимость | % Портфеля |  \n|-------|--------|-----------|------------|  \n| MNT   | 1,200  | $1,560    | 38%        |  \n| USDC  | 1,500  | $1,500    | 37%        |  \n\nПоследние события:  \n- MNT: Депозит 2 ч назад (500 MNT → кошелёк)  \n- USDC: Вывод $800 вчера  \n\n# 2. Обзор DeFi-протоколов 📊  \n\n🏦 Лендинг:  \n| Протокол  | TVL      | APR   | Условия          |  \n|-----------|----------|-------|------------------|  \n| Lendle    | $28M     | 12.4% | LTV 65%, Flex    |  \n| Minterest | $15M     | 9.8%  | Фикс. ставка 30д |  \n\n💧 Ликвидность:  \n| Пул        | TVL      | Объём/24ч | Комиссия |  \n|------------|----------|-----------|----------|  \n| MNT/USDC   | $12M     | $1.2M     | 0.3%     |  \n| wETH/USDT  | $8.5M    | $890k     | 0.05%    |  \n\n# 3. Рекомендации 🎯  \n\nMNT:  \n🏦 Лендинг:  \n1. Lendle (APR 12.4%) – 50% баланса  \n2. Minterest (APR 9.8%) – 30% баланса  \n\n💧 Ликвидность:  \n1. MNT/USDC: Диапазон $0.95–$1.25 (прогноз APY 18-25%)  \n2. MNT/wETH: Диапазон $1.02–$1.38 (прогноз APY 14-20%)  \n\n⚠️ Это не инвестиционный совет. Решение принимает пользователь.*  \nГотово! 🚀"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.9,
-      "position": [
-        0,
-        0
-      ],
-      "id": "b9ca0010-4afc-4c49-bf4e-a5d7635239a2",
-      "name": "Распределение Активов(Новый промт)2"
     },
     {
       "parameters": {
@@ -244,7 +200,7 @@
             },
             {
               "name": "context",
-              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Извлечь кошелёк из сообщения2').item.json.wallet } }}"
+              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Extract a wallet from a message').item.json.wallet } }}"
             }
           ]
         },
@@ -253,8 +209,8 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.2,
       "position": [
-        160,
-        240
+        300,
+        260
       ],
       "id": "7d2ccba9-15ce-48a7-b684-44f93dd3d104",
       "name": "nebula_api_too2"
@@ -273,8 +229,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
       "position": [
-        -680,
-        240
+        -740,
+        360
       ],
       "id": "3784b2a6-9663-4f0e-afee-26a368a54d28",
       "name": "OpenAI Chat Model2",
@@ -284,24 +240,6 @@
           "name": "testDavy"
         }
       }
-    },
-    {
-      "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Извлечь кошелёк из сообщения2').item.json.wallet }}",
-        "hasOutputParser": true,
-        "options": {
-          "systemMessage": "{\n  \"role\": \"agent\",\n  \"name\": \"mantle_wallet_analyzer\",\n  \"description\": \"ИИ-агент, анализирующий криптопортфель пользователя в экосистеме Mantle.\",\n  \"instructions\": [\n    \"Шаг 1: Сначала сделай запрос через tool 'wallet_query' к API https://nebula-api.thirdweb.com/chat, используя 'wallet'.\",\n    \"Шаг 2: Дождись результатов и получи список активов (assets), которые пользователь хранит.\",\n    \"Шаг 3: Используй эти активы для вызова 'price1' (чтобы получить актуальные цены), 'mantle_protocols1' (оценка рисков и доходности протоколов), и 'mantle_chain1' (активность сетей).\",\n    \"Шаг 4: Проанализируй распределение активов, риски, ликвидность и тренды.\",\n    \"Шаг 5: Сформируй структурированный Markdown-отчёт с рекомендациями, и JSON-сводку.\"\n  ],\n  \"input_format\": {\n    \"wallet\": \"string\",\n    \"wallet_info\": \"object\",\n    \"assets\": \"array\",\n    \"chains_result\": \"object\",\n    \"protocols_result\": \"object\"\n  },\n  \"output_format\": {\n    \"report\": \"string\",\n    \"summary\": {\n      \"highRiskProtocols\": \"array\",\n      \"suggestedRebalance\": \"array\",\n      \"underutilizedChains\": \"array\"\n    }\n  },\n  \"tools\": [\n    {\n      \"name\": \"wallet_query\",\n      \"description\": \"Сначала получи информацию о кошельке через API thirdweb (активы, позиции, активность).\"\n    },\n    {\n      \"name\": \"mantle_protocols1\",\n      \"description\": \"Затем используй данные по протоколам Mantle (TVL, риски, доходность).\"\n    },\n    {\n      \"name\": \"mantle_chain1\",\n      \"description\": \"Используй данные по сетям Mantle (активность, вовлечённость, TVL).\"\n    },\n    {\n      \"name\": \"price1\",\n      \"description\": \"Получение актуальных цен по активам из кошелька.\"\n    }\n  ],\n  \"pass_to_next\": true\n}\n"
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.9,
-      "position": [
-        -520,
-        20
-      ],
-      "id": "3fd04951-9e7e-421e-ba45-8a97abc6d62e",
-      "name": "АНАЛИЗ1"
     },
     {
       "parameters": {
@@ -323,8 +261,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -560,
-        240
+        -580,
+        320
       ],
       "id": "7c3e8bcb-b83c-458d-bc1b-16f5e8b401d9",
       "name": "mantle_protocols2"
@@ -349,8 +287,8 @@
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -440,
-        240
+        -460,
+        340
       ],
       "id": "55dade0b-446b-4e29-92b1-72d9ee78b175",
       "name": "mantle_chain2"
@@ -376,7 +314,7 @@
       "typeVersion": 2.2,
       "position": [
         -320,
-        260
+        340
       ],
       "id": "684f1f7b-0cda-4973-b34e-f575596a216a",
       "name": "price2"
@@ -408,7 +346,7 @@
             },
             {
               "name": "context",
-              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Извлечь кошелёк из сообщения2').item.json.wallet } }}"
+              "value": "={{ { chain_ids: [\"5000\"], wallet_address: $('Extract a wallet from a message').item.json.wallet } }}"
             }
           ]
         },
@@ -417,11 +355,73 @@
       "type": "n8n-nodes-base.httpRequestTool",
       "typeVersion": 4.2,
       "position": [
-        -200,
-        240
+        -160,
+        280
       ],
       "id": "c7f050d9-8f51-4f21-836a-81113b222f43",
       "name": "nebula_api_too3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Extract a wallet from a message').item.json.wallet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "{\n  \"role\": \"agent\",\n  \"name\": \"mantle_wallet_analyzer\",\n  \"description\": \"AI agent analyzing the user's crypto portfolio in the Mantle ecosystem.\",\n  \"instructions\": [\n    \"Step 1: First, make a request through the tool 'wallet_query' to the API https://nebula-api.thirdweb.com/chat using 'wallet'.\",\n    \"Step 2: Wait for the results and get the list of assets that the user holds.\",\n    \"Step 3: Use these assets to call 'price1' (to get current prices), 'mantle_protocols1' (risk and return assessment of protocols), and 'mantle_chain2' (network activity).\",\n    \"Step 4: Analyze asset distribution, risks, liquidity, and trends.\",\n    \"Step 5: Form a JSON summary.\",\n    \"Step 6: Pass to the next stage an object with the key 'summary', where 'summary' is a JSON with key metrics and recommendations.\"\n  ],\n  \"input_format\": {\n    \"wallet\": \"string\",\n    \"wallet_info\": \"object\",\n    \"assets\": \"array\",\n    \"chains_result\": \"object\",\n    \"protocols_result\": \"object\"\n  },\n  \"output_format\": {\n    \"report\": \"string\",\n    \"summary\": {\n      \"highRiskProtocols\": \"array\",\n      \"suggestedRebalance\": \"array\",\n      \"underutilizedChains\": \"array\"\n    }\n  },\n  \"tools\": [\n    {\n      \"name\": \"wallet_query\",\n      \"description\": \"First get wallet info through the thirdweb API (assets, positions, activity).\"\n    },\n    {\n      \"name\": \"mantle_protocols1\",\n      \"description\": \"Then use data on Mantle protocols (TVL, risks, returns).\"\n    },\n    {\n      \"name\": \"mantle_chain1\",\n      \"description\": \"Use data on Mantle networks (activity, engagement, TVL).\"\n    },\n    {\n      \"name\": \"price1\",\n      \"description\": \"Get current prices for wallet assets.\"\n    }\n  ],\n  \"pass_to_next\": true\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -520,
+        20
+      ],
+      "id": "3fd04951-9e7e-421e-ba45-8a97abc6d62e",
+      "name": "ANALYSIS"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Extract a wallet from a message').item.json.fullText }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "SYSTEM:\nYou are a Mantle DeFi Strategy Advisor AI. You will receive a single JSON object, `summary`, containing:\n- `walletAddress`: string\n- `timestamp`: ISO string\n- `assets`: array of up to 5 assets { symbol, balance, priceUsd, valueUsd, pctOfPort }\n- `protocols`: array of Mantle DeFi protocols { name, category ('lending' or 'liquidity'), tvl, apy, ltv?, fees?, volatility? }\n- `chains`: array of Mantle chain stats (optional)\n\nYour task is to:\n\n1. Asset Analysis\n   • Present a Markdown table of the top‐5 assets:\n     | Asset | Balance | Price (USD) | Value (USD) | % of Portfolio |\n     |-------|---------|-------------|-------------|----------------|\n\n2. Protocol Overview  \n   • Split `protocols` into two groups:\n     - 🏦 **Lending** (category = \"lending\")\n     - 💧 **Concentrated Liquidity** (category = \"liquidity\")  \n   • For each protocol, show key metrics:\n     - Lending: `APY`, `TVL`, `LTV`  \n     - Liquidity: `TVL`, `Fees`, `Volatility`\n\n3. Placement Strategies\n   For each asset in `assets`, recommend:\n   - 🏦 Lending\n     • Protocol name, APY, TVL  \n     • Suggested allocation (e.g. 50% of that asset)  \n   - 💧 **Concentrated Liquidity**  \n     • Pool name, recommended price range:  \n       `[priceUsd * (1 – volatility), priceUsd * (1 + volatility)]`  \n     • Estimated APR, note IL risk\n\nFORMAT:\n- Use **Markdown** with three sections:  \n  1. Asset Analysis  \n  2. Protocol Overview  \n  3. Placement Strategies  \n- Include emoji 🏦 & 💧, and Markdown tables for clarity.  \n- At the end add:  \n  ⚠️ This is not financial advice. The user makes the final decision.  \n- Finish with: Let’s go! 🚀\n\nUSER PROMPT: \ndata in 'summary'"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -20,
+        0
+      ],
+      "id": "b9ca0010-4afc-4c49-bf4e-a5d7635239a2",
+      "name": "Asset Allocation"
+    },
+    {
+      "parameters": {
+        "jsCode": "function escapeMarkdownV2(text) {\n  return text\n    .replace(/([_*\\[\\]()~`>#+=|{}.!\\-])/g, '\\\\$1') // спецсимволы MarkdownV2\n    .replace(/\\\\/g, '\\\\\\\\')                       // экранируем обратный слеш\n    .replace(/\"/g, '\\\\\"')                         // экранируем двойные кавычки\n    .replace(/\\n/g, '\\\\n');                       // переносы строк\n}\n\n// Получаем chat_id из Telegram Trigger\nconst chatId = $('Telegram Trigger2').first().json.message.chat.id;\n\n// Получаем текст из AI output\nconst rawText = $input.first().json.output || 'Empty message';\n\n// Экранируем текст\nconst escaped = escapeMarkdownV2(rawText);\n\nreturn [\n  {\n    json: {\n      chat_id: chatId,\n      messageEscaped: escaped   // <--- Используем экранированный текст!\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        380,
+        20
+      ],
+      "id": "a83268f3-2156-4e0b-b3a1-a8280e7564b6",
+      "name": "adaptation Markdown2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const telegramText = $('Telegram Trigger2').first()?.json?.message?.text;\nconst inputText = $input.first()?.json?.text;\n\nconst text = (telegramText || inputText || '').toLowerCase();\nconst match = text.match(/(?:^|\\s)(0x[a-f0-9]{40})(?=\\s|$)/m);\n\nreturn [{\n  json: {\n    wallet: match ? match[1] : null,\n    message: match ? '✅ Адрес найден.' : '❌ Не удалось найти адрес в сообщении.',\n    fullText: text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1340,
+        120
+      ],
+      "id": "85a2b8b8-f41b-4ec7-95be-835dadc1ff4e",
+      "name": "Extract a wallet from a message"
     }
   ],
   "pinData": {},
@@ -430,7 +430,7 @@
       "main": [
         [
           {
-            "node": "Извлечь кошелёк из сообщения2",
+            "node": "Extract a wallet from a message",
             "type": "main",
             "index": 0
           }
@@ -441,18 +441,7 @@
       "main": [
         [
           {
-            "node": "АНАЛИЗ1",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Извлечь кошелёк из сообщения2": {
-      "main": [
-        [
-          {
-            "node": "If2",
+            "node": "ANALYSIS",
             "type": "main",
             "index": 0
           }
@@ -488,34 +477,12 @@
         ]
       ]
     },
-    "Экранизация Markdown2": {
-      "main": [
-        [
-          {
-            "node": "HTTP Request",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "OpenRouter Chat Model1": {
       "ai_languageModel": [
         [
           {
-            "node": "Распределение Активов(Новый промт)2",
+            "node": "Asset Allocation",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Распределение Активов(Новый промт)2": {
-      "main": [
-        [
-          {
-            "node": "Экранизация Markdown2",
-            "type": "main",
             "index": 0
           }
         ]
@@ -525,7 +492,7 @@
       "ai_tool": [
         [
           {
-            "node": "Распределение Активов(Новый промт)2",
+            "node": "Asset Allocation",
             "type": "ai_tool",
             "index": 0
           }
@@ -536,19 +503,8 @@
       "ai_languageModel": [
         [
           {
-            "node": "АНАЛИЗ1",
+            "node": "ANALYSIS",
             "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "АНАЛИЗ1": {
-      "main": [
-        [
-          {
-            "node": "Распределение Активов(Новый промт)2",
-            "type": "main",
             "index": 0
           }
         ]
@@ -558,7 +514,7 @@
       "ai_tool": [
         [
           {
-            "node": "АНАЛИЗ1",
+            "node": "ANALYSIS",
             "type": "ai_tool",
             "index": 0
           }
@@ -569,7 +525,7 @@
       "ai_tool": [
         [
           {
-            "node": "АНАЛИЗ1",
+            "node": "ANALYSIS",
             "type": "ai_tool",
             "index": 0
           }
@@ -580,7 +536,7 @@
       "ai_tool": [
         [
           {
-            "node": "АНАЛИЗ1",
+            "node": "ANALYSIS",
             "type": "ai_tool",
             "index": 0
           }
@@ -591,8 +547,52 @@
       "ai_tool": [
         [
           {
-            "node": "АНАЛИЗ1",
+            "node": "ANALYSIS",
             "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ANALYSIS": {
+      "main": [
+        [
+          {
+            "node": "Asset Allocation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Asset Allocation": {
+      "main": [
+        [
+          {
+            "node": "adaptation Markdown2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "adaptation Markdown2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract a wallet from a message": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
             "index": 0
           }
         ]
@@ -603,7 +603,7 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "aeeb0062-52e5-4b79-acf8-6616fd671aef",
+  "versionId": "82fac397-264f-48fa-a59d-36cc1440e9f3",
   "meta": {
     "instanceId": "ee6eea47c082d020b464b486c299fcc74833fad966a25b893934030abf5a82cb"
   },
